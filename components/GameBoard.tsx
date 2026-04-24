@@ -8,8 +8,9 @@ interface GameBoardProps {
 }
 
 export function GameBoard({ gameData }: GameBoardProps) {
-  const { board, snake, food } = gameData;
+  const { board, snake, food, obstacles } = gameData;
   const cells: React.ReactNode[] = [];
+  const obstacleSet = new Set(obstacles.map((o) => `${o.x},${o.y}`));
 
   for (let y = 0; y < board.height; y++) {
     for (let x = 0; x < board.width; x++) {
@@ -19,6 +20,7 @@ export function GameBoard({ gameData }: GameBoardProps) {
       const isSnakeHead = snake[0]?.x === x && snake[0]?.y === y;
       const isSnakeBody = snake.slice(1).some((s) => s.x === x && s.y === y);
       const isFood = food?.x === x && food?.y === y;
+      const isObstacle = obstacleSet.has(`${x},${y}`);
 
       if (isSnakeHead) {
         cellClass += " bg-green-400 shadow-lg shadow-green-400/50";
@@ -27,6 +29,9 @@ export function GameBoard({ gameData }: GameBoardProps) {
       } else if (isFood) {
         cellClass += " bg-red-500 rounded-full animate-pulse";
         content = <div className="w-2/3 h-2/3 bg-red-300 rounded-full mx-auto my-auto" />;
+      } else if (isObstacle) {
+        cellClass += " bg-gray-700 border-2 border-gray-600";
+        content = <div className="w-full h-full bg-gray-800 rounded-sm" />;
       } else {
         cellClass += " bg-gray-800/50";
       }

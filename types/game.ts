@@ -23,6 +23,7 @@ export interface GameBoard {
 export interface GameData {
   snake: SnakeSegment[];
   food: Food | null;
+  obstacles: Position[];
   direction: Direction;
   nextDirection: Direction;
   score: number;

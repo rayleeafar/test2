@@ -6,17 +6,20 @@ import {
   GameState,
   GameData,
   GameBoard,
+  Position,
 } from "@/types/game";
 import {
   BOARD_WIDTH,
   BOARD_HEIGHT,
   createInitialSnake,
   generateFood,
+  generateObstacles,
   getNextPosition,
   isValidDirectionChange,
   isOutOfBounds,
   isSelfCollision,
   getInitialDirection,
+  isPositionOnObstacle,
 } from "@/lib/gameLogic";
 
 const GAME_SPEED = 150;
@@ -31,18 +34,38 @@ export interface UseGameLoopReturn {
   score: number;
 }
 
+function createInitialGameData(): GameData {
+  const snake = createInitialSnake();
+  const obstacles = generateObstacles(snake);
+  return {
+    snake,
+    food: generateFood(snake, obstacles),
+    obstacles,
+    direction: getInitialDirection(),
+    nextDirection: getInitialDirection(),
+    score: 0,
+    gameState: "START",
+    board: { width: BOARD_WIDTH, height: BOARD_HEIGHT },
+  };
+}
+
 export function useGameLoop(): UseGameLoopReturn {
   const board: GameBoard = { width: BOARD_WIDTH, height: BOARD_HEIGHT };
 
-  const [gameData, setGameData] = useState<GameData>({
+  const [gameData, setGameData] = useState<GameData>(() => ({
     snake: createInitialSnake(),
-    food: generateFood(createInitialSnake()),
+    food: null,
+    obstacles: [] as Position[],
     direction: getInitialDirection(),
     nextDirection: getInitialDirection(),
     score: 0,
     gameState: "START",
     board,
-  });
+  }));
+
+  useEffect(() => {
+    setGameData(createInitialGameData());
+  }, []);
 
   const gameLoopRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
@@ -55,7 +78,11 @@ export function useGameLoop(): UseGameLoopReturn {
       const head = prev.snake[0];
       const newHead = getNextPosition(head, newDirection);
 
-      if (isOutOfBounds(newHead, prev.board) || isSelfCollision(newHead, prev.snake)) {
+      if (
+        isOutOfBounds(newHead, prev.board) ||
+        isSelfCollision(newHead, prev.snake) ||
+        isPositionOnObstacle(newHead, prev.obstacles)
+      ) {
         return { ...prev, gameState: "GAME_OVER" };
       }
 
@@ -65,7 +92,7 @@ export function useGameLoop(): UseGameLoopReturn {
 
       if (prev.food && newHead.x === prev.food.x && newHead.y === prev.food.y) {
         newScore += 10;
-        newFood = generateFood(newSnake);
+        newFood = generateFood(newSnake, prev.obstacles);
       } else {
         newSnake.pop();
       }
@@ -104,9 +131,11 @@ export function useGameLoop(): UseGameLoopReturn {
 
   const startGame = useCallback(() => {
     const snake = createInitialSnake();
+    const obstacles = generateObstacles(snake);
     setGameData({
       snake,
-      food: generateFood(snake),
+      food: generateFood(snake, obstacles),
+      obstacles,
       direction: getInitialDirection(),
       nextDirection: getInitialDirection(),
       score: 0,
@@ -126,9 +155,11 @@ export function useGameLoop(): UseGameLoopReturn {
 
   const restartGame = useCallback(() => {
     const snake = createInitialSnake();
+    const obstacles = generateObstacles(snake);
     setGameData({
       snake,
-      food: generateFood(snake),
+      food: generateFood(snake, obstacles),
+      obstacles,
       direction: getInitialDirection(),
       nextDirection: getInitialDirection(),
       score: 0,
