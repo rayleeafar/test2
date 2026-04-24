@@ -13,6 +13,8 @@ export interface SnakeSegment extends Position {}
 
 export type FoodType = "NORMAL" | "SPEED" | "BONUS" | "GHOST";
 
+export type ActiveEffect = "NONE" | "SPEED" | "GHOST";
+
 export interface Food extends Position {
   type: FoodType;
 }
@@ -31,6 +33,8 @@ export interface GameData {
   score: number;
   gameState: GameState;
   board: GameBoard;
+  activeEffect: ActiveEffect;
+  effectEndTime: number | null;
 }
 
 export interface LeaderboardEntry {

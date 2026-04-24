@@ -1,9 +1,68 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { GameBoard } from "./GameBoard";
 import { Direction } from "@/types/game";
+
+function EffectIndicator({ activeEffect, effectEndTime }: { activeEffect: string; effectEndTime: number | null }) {
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  useEffect(() => {
+    if (!effectEndTime || activeEffect === "NONE") {
+      setTimeLeft(0);
+      return;
+    }
+
+    const updateTimeLeft = () => {
+      const remaining = Math.max(0, Math.ceil((effectEndTime - Date.now()) / 1000));
+      setTimeLeft(remaining);
+    };
+
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 100);
+
+    return () => clearInterval(interval);
+  }, [activeEffect, effectEndTime]);
+
+  if (activeEffect === "NONE" || timeLeft === 0) return null;
+
+  const effectConfig = {
+    SPEED: { label: "SPEED", color: "text-yellow-400", bg: "bg-yellow-400/20" },
+    GHOST: { label: "GHOST", color: "text-cyan-400", bg: "bg-cyan-400/20" },
+  };
+
+  const config = effectConfig[activeEffect as keyof typeof effectConfig];
+  if (!config) return null;
+
+  return (
+    <div className={`px-3 py-1 rounded-full ${config.bg} ${config.color} font-bold text-sm animate-pulse`}>
+      {config.label}: {timeLeft}s
+    </div>
+  );
+}
+
+function BeanLegend() {
+  const beans = [
+    { type: "NORMAL", color: "bg-red-500", icon: "●", label: "+10" },
+    { type: "SPEED", color: "bg-yellow-500", icon: "⚡", label: "+15 Speed" },
+    { type: "BONUS", color: "bg-purple-500", icon: "★", label: "+50" },
+    { type: "GHOST", color: "bg-cyan-500", icon: "👻", label: "+20 Ghost" },
+  ] as const;
+
+  return (
+    <div className="flex flex-wrap justify-center gap-3 text-xs text-gray-400">
+      {beans.map((bean) => (
+        <div key={bean.type} className="flex items-center gap-1">
+          <div className={`w-4 h-4 ${bean.color} rounded-full flex items-center justify-center text-[10px]`}>
+            {bean.icon}
+          </div>
+          <span>{bean.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function SnakeGame() {
   const { gameData, startGame, pauseGame, resumeGame, restartGame, setDirection, score } = useGameLoop();
@@ -60,10 +119,13 @@ export function SnakeGame() {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 p-4 max-w-2xl mx-auto">
+    <div className="flex flex-col items-center gap-4 p-4 max-w-2xl mx-auto">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-white mb-2">Snake Game</h1>
         <p className="text-gray-400">Score: <span className="text-green-400 font-bold text-xl">{score}</span></p>
+        <div className="mt-2">
+          <EffectIndicator activeEffect={gameData.activeEffect} effectEndTime={gameData.effectEndTime} />
+        </div>
       </div>
 
       <div className="w-full max-w-md">
@@ -148,6 +210,8 @@ export function SnakeGame() {
       <div className="hidden md:block text-gray-500 text-sm">
         <p>Controls: Arrow keys or WASD to move, Space to pause</p>
       </div>
+
+      <BeanLegend />
     </div>
   );
 }

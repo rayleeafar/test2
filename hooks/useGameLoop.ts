@@ -7,6 +7,7 @@ import {
   GameData,
   GameBoard,
   Position,
+  ActiveEffect,
 } from "@/types/game";
 import {
   BOARD_WIDTH,
@@ -20,9 +21,11 @@ import {
   isSelfCollision,
   getInitialDirection,
   isPositionOnObstacle,
+  getFoodEffect,
+  getEffectSpeedMultiplier,
 } from "@/lib/gameLogic";
 
-const GAME_SPEED = 150;
+const BASE_GAME_SPEED = 150;
 
 export interface UseGameLoopReturn {
   gameData: GameData;
@@ -46,6 +49,8 @@ function createInitialGameData(): GameData {
     score: 0,
     gameState: "START",
     board: { width: BOARD_WIDTH, height: BOARD_HEIGHT },
+    activeEffect: "NONE",
+    effectEndTime: null,
   };
 }
 
@@ -61,6 +66,8 @@ export function useGameLoop(): UseGameLoopReturn {
     score: 0,
     gameState: "START",
     board,
+    activeEffect: "NONE",
+    effectEndTime: null,
   }));
 
   useEffect(() => {
@@ -69,19 +76,41 @@ export function useGameLoop(): UseGameLoopReturn {
 
   const gameLoopRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
+  const activeEffectRef = useRef<{ effect: ActiveEffect; endTime: number | null }>({
+    effect: "NONE",
+    endTime: null,
+  });
+
+  const getCurrentSpeed = useCallback(() => {
+    const multiplier = getEffectSpeedMultiplier(activeEffectRef.current.effect);
+    return BASE_GAME_SPEED * multiplier;
+  }, []);
 
   const updateGame = useCallback(() => {
     setGameData((prev) => {
       if (prev.gameState !== "PLAYING") return prev;
 
+      const now = Date.now();
+      let currentEffect = prev.activeEffect;
+      let effectEndTime = prev.effectEndTime;
+
+      if (effectEndTime && now >= effectEndTime) {
+        currentEffect = "NONE";
+        effectEndTime = null;
+        activeEffectRef.current = { effect: "NONE", endTime: null };
+      }
+
       const newDirection = prev.nextDirection;
       const head = prev.snake[0];
       const newHead = getNextPosition(head, newDirection);
 
+      const isGhostMode = currentEffect === "GHOST";
+      const hitObstacle = isPositionOnObstacle(newHead, prev.obstacles);
+
       if (
         isOutOfBounds(newHead, prev.board) ||
         isSelfCollision(newHead, prev.snake) ||
-        isPositionOnObstacle(newHead, prev.obstacles)
+        (!isGhostMode && hitObstacle)
       ) {
         return { ...prev, gameState: "GAME_OVER" };
       }
@@ -89,10 +118,23 @@ export function useGameLoop(): UseGameLoopReturn {
       const newSnake = [newHead, ...prev.snake];
       let newScore = prev.score;
       let newFood = prev.food;
+      let newEffect = currentEffect;
+      let newEffectEndTime = effectEndTime;
 
       if (prev.food && newHead.x === prev.food.x && newHead.y === prev.food.y) {
-        newScore += 10;
+        const foodEffect = getFoodEffect(prev.food.type);
+        newScore += foodEffect.score;
         newFood = generateFood(newSnake, prev.obstacles);
+
+        if (prev.food.type === "SPEED") {
+          newEffect = "SPEED";
+          newEffectEndTime = now + foodEffect.durationMs;
+          activeEffectRef.current = { effect: "SPEED", endTime: newEffectEndTime };
+        } else if (prev.food.type === "GHOST") {
+          newEffect = "GHOST";
+          newEffectEndTime = now + foodEffect.durationMs;
+          activeEffectRef.current = { effect: "GHOST", endTime: newEffectEndTime };
+        }
       } else {
         newSnake.pop();
       }
@@ -103,6 +145,8 @@ export function useGameLoop(): UseGameLoopReturn {
         direction: newDirection,
         food: newFood,
         score: newScore,
+        activeEffect: newEffect,
+        effectEndTime: newEffectEndTime,
       };
     });
   }, []);
@@ -110,7 +154,8 @@ export function useGameLoop(): UseGameLoopReturn {
   useEffect(() => {
     const loop = (timestamp: number) => {
       if (gameData.gameState === "PLAYING") {
-        if (timestamp - lastUpdateRef.current >= GAME_SPEED) {
+        const currentSpeed = getCurrentSpeed();
+        if (timestamp - lastUpdateRef.current >= currentSpeed) {
           updateGame();
           lastUpdateRef.current = timestamp;
         }
@@ -127,11 +172,12 @@ export function useGameLoop(): UseGameLoopReturn {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [gameData.gameState, updateGame]);
+  }, [gameData.gameState, updateGame, getCurrentSpeed]);
 
   const startGame = useCallback(() => {
     const snake = createInitialSnake();
     const obstacles = generateObstacles(snake);
+    activeEffectRef.current = { effect: "NONE", endTime: null };
     setGameData({
       snake,
       food: generateFood(snake, obstacles),
@@ -141,6 +187,8 @@ export function useGameLoop(): UseGameLoopReturn {
       score: 0,
       gameState: "PLAYING",
       board,
+      activeEffect: "NONE",
+      effectEndTime: null,
     });
     lastUpdateRef.current = 0;
   }, [board]);
@@ -156,6 +204,7 @@ export function useGameLoop(): UseGameLoopReturn {
   const restartGame = useCallback(() => {
     const snake = createInitialSnake();
     const obstacles = generateObstacles(snake);
+    activeEffectRef.current = { effect: "NONE", endTime: null };
     setGameData({
       snake,
       food: generateFood(snake, obstacles),
@@ -165,6 +214,8 @@ export function useGameLoop(): UseGameLoopReturn {
       score: 0,
       gameState: "START",
       board,
+      activeEffect: "NONE",
+      effectEndTime: null,
     });
     lastUpdateRef.current = 0;
   }, [board]);

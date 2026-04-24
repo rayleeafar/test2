@@ -116,6 +116,24 @@ const FOOD_TYPE_WEIGHTS: { type: FoodType; weight: number }[] = [
   { type: "GHOST", weight: 15 },
 ];
 
+export const FOOD_EFFECTS: Record<
+  FoodType,
+  { score: number; durationMs: number; description: string }
+> = {
+  NORMAL: { score: 10, durationMs: 0, description: "Standard food (+10 points)" },
+  SPEED: { score: 15, durationMs: 5000, description: "Speed boost (+15 pts, faster for 5s)" },
+  BONUS: { score: 50, durationMs: 0, description: "Bonus points (+50 points)" },
+  GHOST: { score: 20, durationMs: 8000, description: "Ghost mode (+20 pts, pass through obstacles for 8s)" },
+};
+
+export function getFoodEffect(type: FoodType) {
+  return FOOD_EFFECTS[type];
+}
+
+export function getEffectSpeedMultiplier(activeEffect: string): number {
+  return activeEffect === "SPEED" ? 0.6 : 1.0;
+}
+
 function getRandomFoodType(): FoodType {
   const totalWeight = FOOD_TYPE_WEIGHTS.reduce((sum, ft) => sum + ft.weight, 0);
   let random = Math.random() * totalWeight;
