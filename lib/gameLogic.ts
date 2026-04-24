@@ -1,4 +1,4 @@
-import { Direction, Position, SnakeSegment, Food, GameBoard } from "@/types/game";
+import { Direction, Position, SnakeSegment, Food, FoodType, GameBoard } from "@/types/game";
 
 export const BOARD_WIDTH = 20;
 export const BOARD_HEIGHT = 20;
@@ -109,6 +109,27 @@ function floodFillReachable(start: Position, obstacles: Position[]): Set<string>
   return visited;
 }
 
+const FOOD_TYPE_WEIGHTS: { type: FoodType; weight: number }[] = [
+  { type: "NORMAL", weight: 50 },
+  { type: "SPEED", weight: 15 },
+  { type: "BONUS", weight: 20 },
+  { type: "GHOST", weight: 15 },
+];
+
+function getRandomFoodType(): FoodType {
+  const totalWeight = FOOD_TYPE_WEIGHTS.reduce((sum, ft) => sum + ft.weight, 0);
+  let random = Math.random() * totalWeight;
+
+  for (const { type, weight } of FOOD_TYPE_WEIGHTS) {
+    random -= weight;
+    if (random <= 0) {
+      return type;
+    }
+  }
+
+  return "NORMAL";
+}
+
 export function generateFood(snake: SnakeSegment[], obstacles: Position[]): Food {
   let position: Position;
   const obstacleSet = new Set(obstacles.map((o) => `${o.x},${o.y}`));
@@ -123,7 +144,7 @@ export function generateFood(snake: SnakeSegment[], obstacles: Position[]): Food
     obstacleSet.has(`${position.x},${position.y}`)
   );
 
-  return { ...position, type: "NORMAL" };
+  return { ...position, type: getRandomFoodType() };
 }
 
 export function isPositionOnSnake(position: Position, snake: SnakeSegment[]): boolean {

@@ -1,10 +1,47 @@
 "use client";
 
 import React from "react";
-import { GameData, SnakeSegment, Food } from "@/types/game";
+import { GameData, SnakeSegment, Food, FoodType } from "@/types/game";
 
 interface GameBoardProps {
   gameData: GameData;
+}
+
+function getFoodStyles(type: FoodType): { bg: string; content: React.ReactNode } {
+  switch (type) {
+    case "NORMAL":
+      return {
+        bg: "bg-red-500 rounded-full animate-pulse",
+        content: <div className="w-2/3 h-2/3 bg-red-300 rounded-full mx-auto my-auto" />,
+      };
+    case "SPEED":
+      return {
+        bg: "bg-yellow-500 rounded-full animate-pulse",
+        content: (
+          <div className="w-full h-full flex items-center justify-center text-xs font-bold text-yellow-900">
+            ⚡
+          </div>
+        ),
+      };
+    case "BONUS":
+      return {
+        bg: "bg-purple-500 rounded-full animate-pulse",
+        content: (
+          <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white">
+            ★
+          </div>
+        ),
+      };
+    case "GHOST":
+      return {
+        bg: "bg-cyan-500 rounded-full animate-pulse",
+        content: (
+          <div className="w-full h-full flex items-center justify-center text-xs font-bold text-cyan-900">
+            👻
+          </div>
+        ),
+      };
+  }
 }
 
 export function GameBoard({ gameData }: GameBoardProps) {
@@ -26,9 +63,10 @@ export function GameBoard({ gameData }: GameBoardProps) {
         cellClass += " bg-green-400 shadow-lg shadow-green-400/50";
       } else if (isSnakeBody) {
         cellClass += " bg-green-600";
-      } else if (isFood) {
-        cellClass += " bg-red-500 rounded-full animate-pulse";
-        content = <div className="w-2/3 h-2/3 bg-red-300 rounded-full mx-auto my-auto" />;
+      } else if (isFood && food) {
+        const foodStyles = getFoodStyles(food.type);
+        cellClass += ` ${foodStyles.bg}`;
+        content = foodStyles.content;
       } else if (isObstacle) {
         cellClass += " bg-gray-700 border-2 border-gray-600";
         content = <div className="w-full h-full bg-gray-800 rounded-sm" />;

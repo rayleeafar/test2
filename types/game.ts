@@ -11,8 +11,10 @@ export interface Position {
 
 export interface SnakeSegment extends Position {}
 
+export type FoodType = "NORMAL" | "SPEED" | "BONUS" | "GHOST";
+
 export interface Food extends Position {
-  type: "NORMAL";
+  type: FoodType;
 }
 
 export interface GameBoard {
