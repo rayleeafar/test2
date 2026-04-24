@@ -3,7 +3,8 @@
 import { useEffect, useCallback, useState } from "react";
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { GameBoard } from "./GameBoard";
-import { Direction } from "@/types/game";
+import { Direction, LeaderboardEntry } from "@/types/game";
+import { formatDate } from "@/lib/leaderboard";
 
 function EffectIndicator({ activeEffect, effectEndTime }: { activeEffect: string; effectEndTime: number | null }) {
   const [timeLeft, setTimeLeft] = useState(0);
@@ -64,8 +65,40 @@ function BeanLegend() {
   );
 }
 
+function Leaderboard({ entries }: { entries: LeaderboardEntry[] }) {
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="w-full max-w-md mt-4">
+      <h3 className="text-lg font-bold text-white mb-2 text-center">Leaderboard</h3>
+      <div className="bg-gray-800/50 rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-700/50">
+            <tr>
+              <th className="px-3 py-2 text-left text-gray-400 font-medium">#</th>
+              <th className="px-3 py-2 text-left text-gray-400 font-medium">Score</th>
+              <th className="px-3 py-2 text-right text-gray-400 font-medium">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.slice(0, 5).map((entry, index) => (
+              <tr key={entry.id} className="border-t border-gray-700/50">
+                <td className="px-3 py-2 text-gray-500">{index + 1}</td>
+                <td className="px-3 py-2 text-green-400 font-bold">{entry.score}</td>
+                <td className="px-3 py-2 text-right text-gray-400 text-xs">
+                  {formatDate(entry.timestamp)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export function SnakeGame() {
-  const { gameData, startGame, pauseGame, resumeGame, restartGame, setDirection, score } = useGameLoop();
+  const { gameData, startGame, pauseGame, resumeGame, restartGame, setDirection, score, leaderboard } = useGameLoop();
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -141,6 +174,7 @@ export function SnakeGame() {
             Start Game
           </button>
           <p className="text-gray-500 mt-4 text-sm">Use arrow keys or WASD to move</p>
+          <Leaderboard entries={leaderboard} />
         </div>
       )}
 
@@ -166,6 +200,7 @@ export function SnakeGame() {
           >
             Play Again
           </button>
+          <Leaderboard entries={leaderboard} />
         </div>
       )}
 

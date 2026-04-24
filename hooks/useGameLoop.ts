@@ -24,6 +24,8 @@ import {
   getFoodEffect,
   getEffectSpeedMultiplier,
 } from "@/lib/gameLogic";
+import { loadLeaderboard, saveScore } from "@/lib/leaderboard";
+import { LeaderboardEntry } from "@/types/game";
 
 const BASE_GAME_SPEED = 150;
 
@@ -35,6 +37,7 @@ export interface UseGameLoopReturn {
   restartGame: () => void;
   setDirection: (direction: Direction) => void;
   score: number;
+  leaderboard: LeaderboardEntry[];
 }
 
 function createInitialGameData(): GameData {
@@ -70,8 +73,12 @@ export function useGameLoop(): UseGameLoopReturn {
     effectEndTime: null,
   }));
 
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const scoreSavedRef = useRef(false);
+
   useEffect(() => {
     setGameData(createInitialGameData());
+    setLeaderboard(loadLeaderboard());
   }, []);
 
   const gameLoopRef = useRef<number | null>(null);
@@ -112,6 +119,13 @@ export function useGameLoop(): UseGameLoopReturn {
         isSelfCollision(newHead, prev.snake) ||
         (!isGhostMode && hitObstacle)
       ) {
+        if (!scoreSavedRef.current && prev.score > 0) {
+          scoreSavedRef.current = true;
+          setTimeout(() => {
+            saveScore(prev.score);
+            setLeaderboard(loadLeaderboard());
+          }, 0);
+        }
         return { ...prev, gameState: "GAME_OVER" };
       }
 
@@ -178,6 +192,7 @@ export function useGameLoop(): UseGameLoopReturn {
     const snake = createInitialSnake();
     const obstacles = generateObstacles(snake);
     activeEffectRef.current = { effect: "NONE", endTime: null };
+    scoreSavedRef.current = false;
     setGameData({
       snake,
       food: generateFood(snake, obstacles),
@@ -205,6 +220,7 @@ export function useGameLoop(): UseGameLoopReturn {
     const snake = createInitialSnake();
     const obstacles = generateObstacles(snake);
     activeEffectRef.current = { effect: "NONE", endTime: null };
+    scoreSavedRef.current = false;
     setGameData({
       snake,
       food: generateFood(snake, obstacles),
@@ -236,5 +252,6 @@ export function useGameLoop(): UseGameLoopReturn {
     restartGame,
     setDirection,
     score: gameData.score,
+    leaderboard,
   };
 }
