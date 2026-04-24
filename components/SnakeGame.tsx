@@ -194,16 +194,18 @@ export function SnakeGame() {
       )}
 
       {gameData.gameState === "GAME_OVER" && (
-        <div className="text-center">
-          <p className="text-red-500 text-2xl font-bold mb-2">GAME OVER</p>
-          <p className="text-gray-400 mb-4">Final Score: {score}</p>
-          <button
-            onClick={restartGame}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-colors"
-          >
-            Play Again
-          </button>
-          <Leaderboard entries={leaderboard} />
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-gray-800 border-2 border-red-500/50 rounded-xl p-8 text-center shadow-2xl shadow-red-500/20">
+            <p className="text-red-500 text-4xl font-bold mb-2">GAME OVER</p>
+            <p className="text-gray-400 mb-6">Final Score: <span className="text-green-400 font-bold text-xl">{score}</span></p>
+            <button
+              onClick={restartGame}
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition-colors"
+            >
+              Play Again
+            </button>
+            <Leaderboard entries={leaderboard} />
+          </div>
         </div>
       )}
 
