@@ -179,14 +179,17 @@ export function SnakeGame() {
       )}
 
       {gameData.gameState === "PAUSED" && (
-        <div className="text-center">
-          <p className="text-yellow-400 text-xl font-bold mb-4">PAUSED</p>
-          <button
-            onClick={resumeGame}
-            className="px-6 py-3 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-lg transition-colors"
-          >
-            Resume
-          </button>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-800 border-2 border-yellow-500/50 rounded-xl p-8 text-center shadow-2xl shadow-yellow-500/20">
+            <p className="text-yellow-400 text-3xl font-bold mb-2">PAUSED</p>
+            <p className="text-gray-400 mb-6">Current Score: {score}</p>
+            <button
+              onClick={resumeGame}
+              className="px-8 py-3 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-lg transition-colors"
+            >
+              Resume
+            </button>
+          </div>
         </div>
       )}
 
