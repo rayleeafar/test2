@@ -1,0 +1,8 @@
+# Clack Harness project
+.humanize/
+.claude/
+.codex/
+.gemini/
+.cursor/
+.turbo/
+.next/

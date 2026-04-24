@@ -1,0 +1,37 @@
+export type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT";
+
+export type GameState = "START" | "PLAYING" | "PAUSED" | "GAME_OVER";
+
+export type CellType = "EMPTY" | "SNAKE" | "FOOD" | "OBSTACLE";
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface SnakeSegment extends Position {}
+
+export interface Food extends Position {
+  type: "NORMAL";
+}
+
+export interface GameBoard {
+  width: number;
+  height: number;
+}
+
+export interface GameData {
+  snake: SnakeSegment[];
+  food: Food | null;
+  direction: Direction;
+  nextDirection: Direction;
+  score: number;
+  gameState: GameState;
+  board: GameBoard;
+}
+
+export interface LeaderboardEntry {
+  score: number;
+  timestamp: number;
+  id: string;
+}
